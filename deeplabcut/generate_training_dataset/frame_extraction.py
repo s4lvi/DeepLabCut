@@ -60,7 +60,7 @@ def select_cropping_area(config, videos=None):
 
 
 def extract_frames(config, mode='automatic', algo='kmeans', crop=False, userfeedback=True, cluster_step=1,
-                   cluster_resizewidth=30, cluster_color=False, opencv=True, slider_width=25):
+                   cluster_resizewidth=30, cluster_color=False, opencv=True, slider_width=25, server=False):
     """
     Extracts frames from the videos in the config.yaml file. Only the videos in the config.yaml will be used to select the frames.\n
     Use the function ``add_new_video`` at any stage of the project to add new videos to the config file and extract their frames.
@@ -113,6 +113,8 @@ def extract_frames(config, mode='automatic', algo='kmeans', crop=False, userfeed
     slider_width: number, default: 25
         Width of the video frames slider, in percent of window
 
+    server: bool, default: False
+    
     Examples
     --------
     for selecting frames automatically with 'kmeans' and want to crop the frames.
@@ -198,11 +200,12 @@ def extract_frames(config, mode='automatic', algo='kmeans', crop=False, userfeed
                 fname = Path(video)
                 output_path = Path(config).parents[0] / 'labeled-data' / fname.stem
 
-                if output_path.exists():
-                    if len(os.listdir(output_path)):
-                        askuser = input("The directory already contains some frames. Do you want to add to it?(yes/no): ")
-                        if not (askuser == 'y' or askuser == 'yes' or askuser == 'Y' or askuser == 'Yes'):
-                            sys.exit("Delete the frames and try again later!")
+                if not server:
+                    if output_path.exists():
+                        if len(os.listdir(output_path)):
+                            askuser = input("The directory already contains some frames. Do you want to add to it?(yes/no): ")
+                            if not (askuser == 'y' or askuser == 'yes' or askuser == 'Y' or askuser == 'Yes'):
+                                sys.exit("Delete the frames and try again later!")
 
                 if crop == 'GUI':
                     cfg = select_cropping_area(config, [video])

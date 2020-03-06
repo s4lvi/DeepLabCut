@@ -73,9 +73,10 @@ def extract_frames(projectId):
                                 request.json['cluster_resizewidth'],
                                 request.json['cluster_color'],
                                 request.json['opencv'],
-                                request.json['slider_width'])
+                                request.json['slider_width'],
+                                True)
     else:
-        deeplabcut.extract_frames(config_path, userfeedback=False)
+        deeplabcut.extract_frames(config_path, userfeedback=False, server=True)
     return "Done"
 
 # return a single frame for annotation
