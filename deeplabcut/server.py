@@ -7,10 +7,12 @@ Server wrapper for DeepLabCut (deeplabcut.org)
 Licensed under GNU Lesser General Public License v3.0
 '''
 
+import os
 from flask import Flask, Blueprint
 from flask import request
 import deeplabcut
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.utils import secure_filename
 import pymongo
 from bson.objectid import ObjectId
 
@@ -21,11 +23,19 @@ projectRepository = db["projects"]
 
 @dlc.route('/')
 def default():
-    return "DeepLabCut Server"
+    return "DeepLabCut Server Running"
 
-@dlc.route('/<projectId>/video_upload')
+#TODO: Important: Add file validation here
+@dlc.route('/<projectId>/video_upload', methods=['POST'])
 def video_upload(projectId):
-    return "video uploaded"
+    print(request.files)
+    if 'file' not in request.files:
+        return "No file was sent"
+    project_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path'][0:-11] + 'videos/'
+    file = request.files['file']
+    filename = secure_filename(file.filename)
+    file.save(os.path.join(project_path, filename))
+    return "File uploaded"
 
 @dlc.route('/create', methods=['POST'])
 def create():
@@ -52,7 +62,8 @@ example request = {
 @dlc.route('/<projectId>/extract_frames', methods=['POST'])
 def extract_frames(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    return deeplabcut.extract_frames(config_path, 
+    if (request.json['mode']):
+        return deeplabcut.extract_frames(config_path, 
                                 request.json['mode'], 
                                 request.json['algo'],
                                 request.json['crop'],
@@ -62,6 +73,9 @@ def extract_frames(projectId):
                                 request.json['cluster_color'],
                                 request.json['opencv'],
                                 request.json['slider_width'])
+    else:
+        return deeplabcut.extract_frames(config_path)
+
 
                                 
 @dlc.route('/<projectId>/label_frames', methods=['POST'])
@@ -107,7 +121,7 @@ def plot_trajectories(projectId):
 @dlc.route('/<projectId>/create_labeled_video', methods=['POST'])
 def create_labeled_video(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    deeplabcut.create_labeled_video(request, [], filtered=True)
+    deeplabcut.create_labeled_video(config_path, [], filtered=True)
 
 if __name__ == '__main__':
     app = Flask(__name__)
