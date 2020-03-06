@@ -25,17 +25,21 @@ projectRepository = db["projects"]
 def default():
     return "DeepLabCut Server Running"
 
+#TODO: route - get trained model
+
 #TODO: Important: Add file validation here
 @dlc.route('/<projectId>/video_upload', methods=['POST'])
 def video_upload(projectId):
-    print(request.files)
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     if 'file' not in request.files:
         return "No file was sent"
     project_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path'][0:-11] + 'videos/'
     file = request.files['file']
     filename = secure_filename(file.filename)
-    file.save(os.path.join(project_path, filename))
-    return "File uploaded"
+    video_path = os.path.join(project_path, filename)
+    file.save(video_path)
+    deeplabcut.add_new_videos(config_path, [video_path])
+    return "Video uploaded"
 
 @dlc.route('/create', methods=['POST'])
 def create():
@@ -62,8 +66,8 @@ example request = {
 @dlc.route('/<projectId>/extract_frames', methods=['POST'])
 def extract_frames(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    if (request.json['mode']):
-        return deeplabcut.extract_frames(config_path, 
+    if (request.is_json):
+        deeplabcut.extract_frames(config_path, 
                                 request.json['mode'], 
                                 request.json['algo'],
                                 request.json['crop'],
@@ -74,9 +78,13 @@ def extract_frames(projectId):
                                 request.json['opencv'],
                                 request.json['slider_width'])
     else:
-        return deeplabcut.extract_frames(config_path)
-
-
+        deeplabcut.extract_frames(config_path)
+    video_paths = config_path[:-11] + "/labeled-data"
+    frame_files = []
+    for p in os.listdir(video_paths):
+        frame_files.extend(os.listdir(video_paths + '/' + p)) 
+    return str(frame_files)
+    
                                 
 @dlc.route('/<projectId>/label_frames', methods=['POST'])
 def label_frames(projectId):
