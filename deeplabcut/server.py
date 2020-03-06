@@ -8,13 +8,14 @@ Licensed under GNU Lesser General Public License v3.0
 '''
 
 import os
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, send_file
 from flask import request
 import deeplabcut
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 import pymongo
 from bson.objectid import ObjectId
+import random
 
 dlc = Blueprint('dlc', __name__)
 dbclient = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -39,7 +40,7 @@ def video_upload(projectId):
     video_path = os.path.join(project_path, filename)
     file.save(video_path)
     deeplabcut.add_new_videos(config_path, [video_path])
-    return "Video uploaded"
+    return "Video uploaded"  #TODO: Return real response
 
 @dlc.route('/create', methods=['POST'])
 def create():
@@ -47,7 +48,7 @@ def create():
     experimenter = request.json['experimenter']
     config_path = deeplabcut.create_new_project(name,experimenter,[])
     projectId = projectRepository.insert_one({'project_name': name, 'experimenter': experimenter, 'config_path': config_path}).inserted_id
-    return "Project " + str(projectId) + " created."
+    return "Project " + str(projectId) + " created."  #TODO: Return real response
 
 '''
 example request = { 
@@ -76,8 +77,8 @@ def extract_frames(projectId):
                                 request.json['slider_width'],
                                 True)
     else:
-        deeplabcut.extract_frames(config_path, userfeedback=False, server=True)
-    return "Done"
+        deeplabcut.extract_frames(config_path, "kmeans", False, False, 1, 30, False, True, 25, True)
+    return "Done" #TODO: Return real response
 
 # return a single frame for annotation
 @dlc.route('/<projectId>/get_frame', methods=['GET'])
@@ -86,7 +87,10 @@ def get_frame(projectId):
     video_paths = config_path[:-11] + "/labeled-data"
     frame_files = []
     for p in os.listdir(video_paths):
-        frame_files.extend(os.listdir(video_paths + '/' + p)) 
+        for f in os.listdir(video_paths + '/' + p):
+            frame_files.append(video_paths + '/' + p + '/' + f)
+    img = frame_files[random.randint(0,len(frame_files)-1)]
+    return send_file(img)
     
                                 
 @dlc.route('/<projectId>/label_frames', methods=['POST'])
