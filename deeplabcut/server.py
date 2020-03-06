@@ -1,0 +1,108 @@
+'''
+DeepLabCut Server
+Jordan Salvi
+
+Server wrapper for DeepLabCut (deeplabcut.org)
+
+Licensed under GNU Lesser General Public License v3.0
+'''
+
+from flask import Flask, Blueprint
+from flask import request
+import deeplabcut
+from werkzeug.middleware.proxy_fix import ProxyFix
+import pymongo
+import uuid
+
+dlc = Blueprint('dlc', __name__)
+dbclient = pymongo.MongoClient("mongodb://localhost:27017/")
+db = dbclient["deeplabcut"]
+projectRepository = db["projects"]
+
+@dlc.route('/')
+def default():
+    return "DeepLabCut Server"
+
+@dlc.route('/<projectId>/video_upload')
+def video_upload(projectId):
+    return "video uploaded"
+
+@dlc.route('/create', methods=['POST'])
+def create():
+    name = request.json['project_name']
+    experimenter = request.json['experimenter']
+    config_path = deeplabcut.create_new_project(name,experimenter,[])
+    projectId = uuid.uuid4()
+    projectRepository.insert_one({'project_id': projectId, 'project_name': name, 'experimenter': experimenter, 'config_path': config_path})
+
+
+'''
+example request = {
+    'mode':'automatic', 
+    'algo':'kmeans', 
+    'crop':'False', 
+    'userfeedback':'True', 
+    'cluster_step':1,
+    'cluster_resizewidth':30, 
+    'cluster_color':'false', 
+    'opencv':'true', 
+    'slider_width':25
+}
+'''
+@dlc.route('/<projectId>/extract_frames', methods=['POST'])
+def extract_frames(projectId):
+    config_path = projectRepository.find({'project_id': projectId})['config_path']
+    print(config_path)
+    deeplabcut.extract_frames(config_path, 
+                                request.json['mode'], 
+                                request.json['algo'],
+                                request.json['crop'],
+                                request.json['userfeedback'],
+                                request.json['cluster_step'],
+                                request.json['cluster_resizewidth'],
+                                request.json['cluster_color'],
+                                request.json['opencv'],
+                                request.json['slider_width'])
+
+@dlc.route('/<projectId>/label_frames', methods=['POST'])
+def label_frames(projectId):
+    deeplabcut.label_frames(config_path)
+
+@dlc.route('/<projectId>/check_labels', methods=['POST'])
+def check_labels(projectId):
+    deeplabcut.check_labels(config_path)
+
+@dlc.route('/<projectId>/create_training_dataset', methods=['POST'])
+def create_training_dataset(projectId):
+    deeplabcut.create_training_dataset(config_path)
+
+@dlc.route('/<projectId>/train_network', methods=['POST'])
+def train_network(projectId):
+    deeplabcut.train_network(config_path)
+
+@dlc.route('/<projectId>/evaluate_network', methods=['POST'])
+def evaluate_network(projectId):
+    deeplabcut.evaluate_network(config_path)
+
+@dlc.route('/<projectId>/analyze_videos', methods=['POST'])
+def analyze_videos(projectId):
+    deeplabcut.analyze_videos(config_path, [])
+
+@dlc.route('/<projectId>/filterpredictions', methods=['POST'])
+def filterpredictions(projectId):
+    deeplabcut.filterpredictions(config_path, [])
+
+@dlc.route('/<projectId>/plot_trajectories', methods=['POST'])
+def plot_trajectories(projectId):
+    deeplabcut.plot_trajectories(config_path, [], filtered=True)
+
+@dlc.route('/<projectId>/create_labeled_video', methods=['POST'])
+def create_labeled_video(projectId):
+    deeplabcut.create_labeled_video(request, [], filtered=True)
+
+if __name__ == '__main__':
+    app = Flask(__name__)
+    app.register_blueprint(dlc, url_prefix='/')
+    app.wsgi_app = ProxyFix(app.wsgi_app)
+    print(app.url_map)
+    app.run()
