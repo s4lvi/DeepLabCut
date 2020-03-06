@@ -12,7 +12,7 @@ from flask import request
 import deeplabcut
 from werkzeug.middleware.proxy_fix import ProxyFix
 import pymongo
-import uuid
+from bson.objectid import ObjectId
 
 dlc = Blueprint('dlc', __name__)
 dbclient = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -32,28 +32,27 @@ def create():
     name = request.json['project_name']
     experimenter = request.json['experimenter']
     config_path = deeplabcut.create_new_project(name,experimenter,[])
-    projectId = uuid.uuid4()
-    projectRepository.insert_one({'project_id': projectId, 'project_name': name, 'experimenter': experimenter, 'config_path': config_path})
+    projectId = projectRepository.insert_one({'project_name': name, 'experimenter': experimenter, 'config_path': config_path}).inserted_id
+    return "Project " + str(projectId) + " created."
 
 
 '''
 example request = {
-    'mode':'automatic', 
-    'algo':'kmeans', 
-    'crop':'False', 
-    'userfeedback':'True', 
-    'cluster_step':1,
-    'cluster_resizewidth':30, 
-    'cluster_color':'false', 
-    'opencv':'true', 
-    'slider_width':25
+    "mode":"automatic", 
+    "algo":"kmeans", 
+    "crop":"False", 
+    "userfeedback":"True", 
+    "cluster_step":1,
+    "cluster_resizewidth":30, 
+    "cluster_color":"false", 
+    "opencv":"true", 
+    "slider_width":25
 }
 '''
 @dlc.route('/<projectId>/extract_frames', methods=['POST'])
 def extract_frames(projectId):
-    config_path = projectRepository.find({'project_id': projectId})['config_path']
-    print(config_path)
-    deeplabcut.extract_frames(config_path, 
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
+    return deeplabcut.extract_frames(config_path, 
                                 request.json['mode'], 
                                 request.json['algo'],
                                 request.json['crop'],
@@ -64,40 +63,50 @@ def extract_frames(projectId):
                                 request.json['opencv'],
                                 request.json['slider_width'])
 
+                                
 @dlc.route('/<projectId>/label_frames', methods=['POST'])
 def label_frames(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.label_frames(config_path)
 
 @dlc.route('/<projectId>/check_labels', methods=['POST'])
 def check_labels(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.check_labels(config_path)
 
 @dlc.route('/<projectId>/create_training_dataset', methods=['POST'])
 def create_training_dataset(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.create_training_dataset(config_path)
 
 @dlc.route('/<projectId>/train_network', methods=['POST'])
 def train_network(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.train_network(config_path)
 
 @dlc.route('/<projectId>/evaluate_network', methods=['POST'])
 def evaluate_network(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.evaluate_network(config_path)
 
 @dlc.route('/<projectId>/analyze_videos', methods=['POST'])
 def analyze_videos(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.analyze_videos(config_path, [])
 
 @dlc.route('/<projectId>/filterpredictions', methods=['POST'])
 def filterpredictions(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.filterpredictions(config_path, [])
 
 @dlc.route('/<projectId>/plot_trajectories', methods=['POST'])
 def plot_trajectories(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.plot_trajectories(config_path, [], filtered=True)
 
 @dlc.route('/<projectId>/create_labeled_video', methods=['POST'])
 def create_labeled_video(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.create_labeled_video(request, [], filtered=True)
 
 if __name__ == '__main__':
