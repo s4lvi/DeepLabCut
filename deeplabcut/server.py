@@ -49,13 +49,10 @@ def create():
     projectId = projectRepository.insert_one({'project_name': name, 'experimenter': experimenter, 'config_path': config_path}).inserted_id
     return "Project " + str(projectId) + " created."
 
-
 '''
-example request = {
-    "mode":"automatic", 
+example request = { 
     "algo":"kmeans", 
-    "crop":"False", 
-    "userfeedback":"True", 
+    "crop":"False",  
     "cluster_step":1,
     "cluster_resizewidth":30, 
     "cluster_color":"false", 
@@ -68,22 +65,27 @@ def extract_frames(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     if (request.is_json):
         deeplabcut.extract_frames(config_path, 
-                                request.json['mode'], 
+                                'automatic', 
                                 request.json['algo'],
                                 request.json['crop'],
-                                request.json['userfeedback'],
+                                False,
                                 request.json['cluster_step'],
                                 request.json['cluster_resizewidth'],
                                 request.json['cluster_color'],
                                 request.json['opencv'],
                                 request.json['slider_width'])
     else:
-        deeplabcut.extract_frames(config_path)
+        deeplabcut.extract_frames(config_path, userfeedback=False)
+    return "Done"
+
+# return a single frame for annotation
+@dlc.route('/<projectId>/get_frame', methods=['GET'])
+def get_frame(projectId):
+    config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     video_paths = config_path[:-11] + "/labeled-data"
     frame_files = []
     for p in os.listdir(video_paths):
         frame_files.extend(os.listdir(video_paths + '/' + p)) 
-    return str(frame_files)
     
                                 
 @dlc.route('/<projectId>/label_frames', methods=['POST'])
