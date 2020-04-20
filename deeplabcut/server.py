@@ -26,8 +26,6 @@ projectRepository = db["projects"]
 def default():
     return "DeepLabCut Server Running"
 
-#TODO: route - get trained model
-
 #TODO: Important: Add file validation here
 @dlc.route('/<projectId>/video_upload', methods=['POST'])
 def video_upload(projectId):
@@ -84,72 +82,74 @@ def extract_frames(projectId):
 @dlc.route('/<projectId>/get_frame', methods=['GET'])
 def get_frame(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    print(config_path)
     video_paths = config_path[:-11] + "labeled-data"
-    print(video_paths)
     frame_files = []
     for p in os.listdir(video_paths):
-        print(p)
         for f in os.listdir(video_paths + '/' + p):
-            print(f)
             frame_files.append(video_paths + '/' + p + '/' + f)
     img = frame_files[random.randint(0,len(frame_files)-1)]
     return send_file(img)
-    
                                 
 @dlc.route('/<projectId>/label_frames', methods=['POST'])
 def label_frames(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    deeplabcut.label_frames(config_path)
-    return "OK" #TODO: Return real response
+    #TODO: cannot use the dlc label_frames method because it is gui based
+    print("test")
+    deeplabcut.label_frames(config_path) 
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/check_labels', methods=['GET'])
 def check_labels(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    deeplabcut.check_labels(config_path)
-    return "OK" #TODO: Return real response
+    #deeplabcut.check_labels(config_path)
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/create_training_dataset', methods=['GET'])
 def create_training_dataset(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    deeplabcut.create_training_dataset(config_path)
-    return "OK" #TODO: Return real response
+    #deeplabcut.create_training_dataset(config_path)
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/train_network', methods=['GET'])
 def train_network(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    deeplabcut.train_network(config_path)
-    return "OK" #TODO: Return real response
+    #deeplabcut.train_network(config_path)
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/evaluate_network', methods=['GET'])
 def evaluate_network(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    deeplabcut.evaluate_network(config_path)
-    return "OK" #TODO: Return real response
+    #deeplabcut.evaluate_network(config_path)
+    return "Not Implemented", 501
+    
+#TODO: route - get trained model can be done later
+@dlc.route('/<projectId>/get_trained_model', methods=['GET'])
+def get_trained_model(projectId):
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/analyze_videos', methods=['POST'])
 def analyze_videos(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.analyze_videos(config_path, [])
-    return "OK" #TODO: Return real response
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/filterpredictions', methods=['POST'])
 def filterpredictions(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.filterpredictions(config_path, [])
-    return "OK" #TODO: Return real response
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/plot_trajectories', methods=['POST'])
 def plot_trajectories(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.plot_trajectories(config_path, [], filtered=True)
-    return "OK" #TODO: Return real response
+    return "Not Implemented", 501
 
 @dlc.route('/<projectId>/create_labeled_video', methods=['POST'])
 def create_labeled_video(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.create_labeled_video(config_path, [], filtered=True)
-    return "OK" #TODO: Return real response
+    return "Not Implemented", 501
 
 if __name__ == '__main__':
     app = Flask(__name__)
