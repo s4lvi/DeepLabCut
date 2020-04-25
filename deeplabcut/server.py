@@ -85,8 +85,9 @@ def get_frame(projectId):
     video_paths = config_path[:-11] + "labeled-data"
     frame_files = []
     for p in os.listdir(video_paths):
-        for f in os.listdir(video_paths + '/' + p):
-            frame_files.append(video_paths + '/' + p + '/' + f)
+        if not (p[0] == '.'):
+            for f in os.listdir(video_paths + '/' + p):
+                frame_files.append(video_paths + '/' + p + '/' + f)
     img = frame_files[random.randint(0,len(frame_files)-1)]
     return send_file(img)
                                 
@@ -101,8 +102,11 @@ def label_frames(projectId):
 @dlc.route('/<projectId>/check_labels', methods=['GET'])
 def check_labels(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    #deeplabcut.check_labels(config_path)
-    return "Not Implemented", 501
+    err_folders = deeplabcut.check_labels(config_path)
+    if (len(err_folders) > 0):
+        return "Some labels were incorrect", 400
+    else: 
+        return "OK", 200
 
 @dlc.route('/<projectId>/create_training_dataset', methods=['GET'])
 def create_training_dataset(projectId):

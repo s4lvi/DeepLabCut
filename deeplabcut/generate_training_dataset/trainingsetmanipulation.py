@@ -294,14 +294,17 @@ def check_labels(config,Labels = ['+','.','x'],scale = 1):
     #folders = [Path(config).parent / 'labeled-data' /Path(i) for i in video_names]
     folders = [os.path.join(cfg['project_path'],'labeled-data',str(Path(i))) for i in video_names]
     print("Creating images with labels by %s." %cfg['scorer'])
+    err_folders = []
     for folder in folders:
         try:
             DataCombined = pd.read_hdf(os.path.join(str(folder),'CollectedData_' + cfg['scorer'] + '.h5'), 'df_with_missing')
             MakeLabeledPlots(folder,DataCombined,cfg,Labels,Colorscheme,cc,scale)
         except FileNotFoundError:
             print("Attention:", folder, "does not appear to have labeled data!")
+            err_folders.append(folder)
 
     print("If all the labels are ok, then use the function 'create_training_dataset' to create the training dataset!")
+    return err_folders
 
 def MakeLabeledPlots(folder,DataCombined,cfg,Labels,Colorscheme,cc,scale):
     tmpfolder = str(folder) + '_labeled'
