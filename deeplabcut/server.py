@@ -24,6 +24,7 @@ projectRepository = db["projects"]
 
 @dlc.route('/')
 def default():
+    print(deeplabcut)
     return "DeepLabCut Server Running"
 
 #TODO: Important: Add file validation here
@@ -111,8 +112,8 @@ def check_labels(projectId):
 @dlc.route('/<projectId>/create_training_dataset', methods=['GET'])
 def create_training_dataset(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    #deeplabcut.create_training_dataset(config_path)
-    return "Not Implemented", 501
+    deeplabcut.create_training_dataset(config_path)
+    return "OK", 200
 
 @dlc.route('/<projectId>/train_network', methods=['GET'])
 def train_network(projectId):
