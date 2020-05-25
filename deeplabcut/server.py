@@ -98,20 +98,20 @@ def label_frames(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
 
     try:
-        label_csv = convert_label_request(request)
+        label_csv = convert_label_request(request) #TODO: implement this method
     except:
         print("Could not convert request to CSV")
         return "Could not convert request to CSV", 400
 
     try: 
-        file = open(video_path + '/CollectedData_' + author, 'w')
+        file = open(video_path + '/CollectedData_' + author, 'w') #TODO: get video_path and author from request
         file.write(label_csv)
         file.close()
     except:
         print("Could not save CSV file")
         return "Could not save CSV file", 400
-        
-    #deeplabcut.label_frames(config_path) 
+
+    #TODO: Figure out if .h5 file is also required, if so, convert the csv to .h5 (method exists in conversioncode.py: convertcsv2h5)
     return "OK", 200
 
 @dlc.route('/<projectId>/check_labels', methods=['GET'])
@@ -171,7 +171,7 @@ def create_labeled_video(projectId):
     return "Not Implemented", 501
 
 
-#TODO: add another method to convert to h5, and pandas dataframe?
+#TODO: add another method to convert to h5, and pandas dataframe? Or use already existing convertcsv2h5 method 
 # Converts the incoming label request to a csv file
 def convert_label_request(request):
     converted = ""

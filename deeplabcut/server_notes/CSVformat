@@ -1,0 +1,5 @@
+scorer, s1, s2, s3 //as many scorers as there are items in the next row
+bodyparts, b1, b2, b3 //slightly unclear as the demo dataset has each bodypart duplicated, aka 4 unique bodyparts but 8 entries
+coords, x, y, x, y, x, y // as many coord pairs as there are unique bodyparts
+path/to/image001.png,x,y,x,y,x,y // as many coord pairs as there are unique bodyparts, if no labeled coord, this is blank commas
+path/to/image002.png,,,,,, 
