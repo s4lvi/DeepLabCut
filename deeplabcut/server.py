@@ -11,6 +11,7 @@ import os
 import random
 import pymongo
 import deeplabcut
+import json
 from flask import Flask, Blueprint, send_file
 from flask import request
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -95,10 +96,23 @@ def get_frame(projectId):
 @dlc.route('/<projectId>/label_frames', methods=['POST'])
 def label_frames(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
-    #TODO: cannot use the dlc label_frames method because it is gui based
-    print("test")
-    deeplabcut.label_frames(config_path) 
-    return "Not Implemented", 501
+
+    try:
+        label_csv = convert_label_request(request)
+    except:
+        print("Could not convert request to CSV")
+        return "Could not convert request to CSV", 400
+
+    try: 
+        file = open(video_path + '/CollectedData_' + author, 'w')
+        file.write(label_csv)
+        file.close()
+    except:
+        print("Could not save CSV file")
+        return "Could not save CSV file", 400
+        
+    #deeplabcut.label_frames(config_path) 
+    return "OK", 200
 
 @dlc.route('/<projectId>/check_labels', methods=['GET'])
 def check_labels(projectId):
@@ -155,6 +169,14 @@ def create_labeled_video(projectId):
     config_path = projectRepository.find_one({'_id': ObjectId(projectId)})['config_path']
     deeplabcut.create_labeled_video(config_path, [], filtered=True)
     return "Not Implemented", 501
+
+
+#TODO: add another method to convert to h5, and pandas dataframe?
+# Converts the incoming label request to a csv file
+def convert_label_request(request):
+    converted = ""
+    return converted
+
 
 if __name__ == '__main__':
     app = Flask(__name__)
